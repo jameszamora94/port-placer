@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Port Placer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo-title">
+      <img src="../Images/trocar-icon.png" alt="Logo" class="logo" />
+      <h1>Port Placer</h1>
+    </div>
+    <a href="#" class="contact">Contact</a>
+  </header>
+
+  <main>
+    <p class="instructions">Click anywhere on the image to add a port.</p>
+    <div class="canvas-wrapper">
+      <canvas id="canvas"></canvas>
+      <img id="image" src="../Images/Abdomen.jpg" alt="Abdomen" />
+    </div>
+    <div class="buttons">
+      <button id="undoBtn">Undo</button>
+      <button id="clearBtn">Clear All</button>
+      <button id="downloadBtn">Download</button>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
