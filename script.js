@@ -1,102 +1,120 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Helvetica Neue', sans-serif;
+const image  = document.getElementById('image');
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+let ports    = [];
+
+// Resize canvas to overlay the image
+function resizeCanvas() {
+  const rect = image.getBoundingClientRect();
+  const dpr  = window.devicePixelRatio || 1;
+
+  canvas.width  = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width  = `${rect.width}px`;
+  canvas.style.height = `${rect.height}px`;
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redraw();
 }
 
-body {
-  background-color: #f3f3f3;
-  color: #333;
-  overflow-x: hidden;
+// Unified click handler for placing ports
+function handleCanvasClick(e) {
+  // Ensure canvas is sized
+  if (canvas.width === 0 || canvas.height === 0) {
+    resizeCanvas();
+  }
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const sizeInput = prompt('Enter port size (1–12 mm):');
+  const size = parseInt(sizeInput, 10);
+  if (!Number.isInteger(size) || size < 1 || size > 12) {
+    alert('Please enter an integer between 1 and 12.');
+    return;
+  }
+
+  ports.push({ x, y, size });
+  redraw();
 }
 
-header {
-  background-color: #2c2c2c;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  padding: 1rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+// Draw all ports on-screen
+function redraw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const dpr = window.devicePixelRatio || 1;
+
+  ports.forEach(({ x, y, size }) => {
+    const radius = (10 + size) * 0.4;
+
+    // dot
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fillStyle = '#2c2c2c';
+    ctx.fill();
+
+    // label (black)
+    ctx.font = `${5 * dpr}px sans-serif`;
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#000';
+    ctx.fillText(`${size} mm`, x - radius, y + radius + 2);
+  });
 }
 
-.logo-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
+// Undo / Clear
+document.getElementById('undoBtn')
+  .addEventListener('click', () => { ports.pop(); redraw(); });
+document.getElementById('clearBtn')
+  .addEventListener('click', () => { ports = []; redraw(); });
 
-.logo {
-  height: 44px;    /* slightly larger than before */
-  width: auto;     /* preserve aspect ratio */
-}
+// Download annotated image
+document.getElementById('downloadBtn')
+  .addEventListener('click', () => {
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width  = image.naturalWidth;
+    exportCanvas.height = image.naturalHeight;
+    const exportCtx = exportCanvas.getContext('2d');
 
-.contact {
-  position: absolute;
-  right: 2rem;
-  color: white;
-  text-decoration: none;
-  font-size: 0.9rem;
-}
+    // draw full-res image
+    exportCtx.drawImage(image, 0, 0);
 
-main {
-  padding: 1rem;
-  text-align: center;
-}
+    const rect  = image.getBoundingClientRect();
+    const scale = image.naturalWidth / rect.width;
 
-.instructions {
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  color: #444;
-}
+    // draw each port scaled
+    ports.forEach(({ x, y, size }) => {
+      const radius = (10 + size) * scale * 0.4;
+      const sx     = x * scale;
+      const sy     = y * scale;
 
-/* --------- WRAPPER & IMAGE/CANVAS STYLING --------- */
-.canvas-wrapper {
-  display: inline-block;
-  position: relative;
-  max-width: 90vw;
-  margin: 20px 0;
-  background-color: white;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
+      exportCtx.beginPath();
+      exportCtx.arc(sx, sy, radius, 0, 2 * Math.PI);
+      exportCtx.fillStyle = '#2c2c2c';
+      exportCtx.fill();
 
-#image {
-  display: block;
-  max-width: 100%;
-  max-height: 70vh;
-  width: auto;
-}
+      exportCtx.font = `${5 * scale}px sans-serif`;
+      exportCtx.textBaseline = 'top';
+      exportCtx.fillStyle = '#000';
+      exportCtx.fillText(`${size} mm`, sx - radius, sy + radius + 2);
+    });
 
-#canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-}
-/* ----------------------------------------------------------- */
+    // trigger download
+    const link = document.createElement('a');
+    link.download = 'port_placement.jpg';
+    link.href = exportCanvas.toDataURL('image/jpeg', 1.0);
+    link.click();
+  });
 
-.buttons {
-  margin-top: 0.75rem;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
+// Hook up resizing
+image.addEventListener('load', resizeCanvas);
+// If image was cached, force an initial resize
+if (image.complete) resizeCanvas();
 
-button {
-  background-color: #2c2c2c;
-  color: white;
-  padding: 0.5rem 1.2rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
+window.addEventListener('resize', () => {
+  clearTimeout(window._resizeTimeout);
+  window._resizeTimeout = setTimeout(resizeCanvas, 100);
+});
 
-button:hover {
-  background-color: #444;
-}
+// **Only** the wrapper listens for clicks now
+const wrapper = document.querySelector('.canvas-wrapper');
+wrapper.addEventListener('click', handleCanvasClick);
