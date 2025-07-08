@@ -1,3 +1,4 @@
+/* ========== GLOBAL STYLES (DESKTOP + MOBILE) ========== */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -29,8 +30,8 @@ header {
 }
 
 .logo {
-  height: 44px;    /* slightly larger than before */
-  width: auto;     /* preserve aspect ratio */
+  height: 44px;    /* your slightly larger icon */
+  width: auto;
 }
 
 .contact {
@@ -41,6 +42,7 @@ header {
   font-size: 0.9rem;
 }
 
+/* main + canvas-wrapper + buttons default (desktop/tablet) */
 main {
   padding: 1rem;
   text-align: center;
@@ -52,14 +54,13 @@ main {
   color: #444;
 }
 
-/* --------- WRAPPER & IMAGE/CANVAS STYLING --------- */
 .canvas-wrapper {
-  display: inline-block;
+  display: inline-block;       /* centers under main */
   position: relative;
   max-width: 90vw;
   margin: 20px 0;
-  background-color: white;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  background: white;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
   overflow: hidden;
 }
 
@@ -72,11 +73,9 @@ main {
 
 #canvas {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 0; left: 0;
   pointer-events: none;
 }
-/* ----------------------------------------------------------- */
 
 .buttons {
   margin-top: 0.75rem;
@@ -96,7 +95,54 @@ button {
   cursor: pointer;
   transition: background-color 0.3s;
 }
+button:hover { background-color: #444; }
 
-button:hover {
-  background-color: #444;
+
+/* ========== MOBILE‐ONLY OVERRIDES ========== */
+@media only screen and (max-width: 600px) {
+  /* make main fill from below header to bottom */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  main {
+    display: flex;
+    flex-direction: column;
+    /* assume header ~4rem tall; adjust if your header differs */
+    height: calc(100vh - 4rem);
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .canvas-wrapper {
+    flex: 1;                  /* grow to fill available space */
+    max-width: 90vw;
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  }
+
+  #image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;      /* scale to fit without overflow */
+    display: block;
+  }
+
+  #canvas {
+    /* overlay exactly */
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+
+  .buttons {
+    flex-shrink: 0;           /* stay at bottom */
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
 }
